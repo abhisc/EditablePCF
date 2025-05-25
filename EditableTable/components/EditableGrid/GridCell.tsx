@@ -70,6 +70,8 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
         newValue,
       }));
 
+
+      // here
       dispatch(updateRow({
         rowKey: row.key,
         columnName: currentColumn.key,

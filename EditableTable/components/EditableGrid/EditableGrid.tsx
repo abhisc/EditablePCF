@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ColumnActionsMode,
   ConstrainMode,
@@ -43,6 +43,7 @@ import { gridStyles } from '../../styles/DetailsListStyles';
 import { IDataSetProps } from '../AppWrapper';
 import { getContainerHeight } from '../../utils/commonUtils';
 import { clearInvalidFields } from '../../store/features/ErrorSlice';
+import { Entity, ErrorDetails } from '../../services/DataverseService';
 
 const ASC_SORT = 0;
 const DESC_SORT = 1;
@@ -179,6 +180,86 @@ export const EditableGrid = ({ _service, _setContainerHeight,
       setSortMenuProps(getSortMenuProps(ev, column));
     }
   };
+
+
+  // Add effect to filter Invoice lookups
+  useEffect(() => {
+    const filterInvoiceLookups = async () => {
+      console.log('Starting filterInvoiceLookups...');
+
+      const fieldName = 'nb_invoice';
+      const parentEntityMetadata = _service.getParentMetadata();
+      try {
+        console.log('Attempting to get parent record...');
+        // Get the supplier code from parent record using webAPI directly
+        const parentRecord = await _service.getContext().webAPI.retrieveRecord(
+          'nb_ae_chequeregister',
+          parentEntityMetadata.entityId,
+          '?$select=nb_supplier',
+        );
+        console.log('Parent Record:', parentRecord);
+        const supplierCode = parentRecord?.nb_supplier;
+        console.log('Supplier Code:', supplierCode);
+
+        if (supplierCode) {
+          console.log('Filtering invoices for supplier:', supplierCode);
+          // Filter invoices by supplier code and status
+          const filteredInvoices = await _service.retrieveMultipleRecords(
+            'nb_ae_invoice',
+            `?$select=nb_ae_invoiceid,nb_supplierreference&$filter=
+            (nb_supplier eq '${supplierCode}' and nb_invoicestatus eq 124840000)`,
+          );
+          console.log('Filtered Invoices:', filteredInvoices);
+
+          // Update the lookup options with filtered results
+          if (filteredInvoices && filteredInvoices.length > 0) {
+            const newFilteredOptions = filteredInvoices.map((invoice: Entity) => {
+              console.log('Processing invoice:', invoice);
+              const displayName = invoice.nb_supplierreference ||
+                `Invoice ${invoice.nb_ae_invoiceid.substring(0, 8)}`;
+              console.log('Generated display name:', displayName);
+              return {
+                key: invoice.nb_ae_invoiceid,
+                name: displayName,
+                ...invoice,
+              };
+            });
+            console.log('Filtered Options:', newFilteredOptions);
+            // Update both the store and local state
+            dispatch({
+              type: 'lookup/setLookupOptions',
+              payload: {
+                logicalName: fieldName,
+                options: newFilteredOptions,
+              },
+            });
+            console.log('Updated lookup options in store and local state');
+          }
+          else {
+            console.log('No filtered invoices found');
+          }
+        }
+        else {
+          console.log('No supplier code found in parent record');
+        }
+      }
+      catch (error: unknown) {
+        console.error('Error filtering invoice lookups:', error);
+        if (error && typeof error === 'object') {
+          const errorObj = error as ErrorDetails;
+          console.error('Error details:', {
+            code: errorObj.code,
+            message: errorObj.message,
+            errorCode: errorObj.errorCode,
+            title: errorObj.title,
+            raw: errorObj.raw,
+          });
+        }
+      }
+    };
+
+    filterInvoiceLookups();
+  }, []);
 
   return <div className='container'>
     <Stack horizontal horizontalAlign="end" className={buttonStyles.buttons}>
