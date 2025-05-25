@@ -44,6 +44,8 @@ export interface IDataverseService {
   openForm(id: string, entityName?: string): void;
   createNewRecord(data: {}): Promise<ComponentFramework.LookupValue | ErrorDetails>;
   retrieveAllRecords(entityName: string, options: string): Promise<Entity[]>;
+  retrieveMultipleRecords(entityName: string, options: string): Promise<Entity[]>;
+  getRecord(recordId: string): Promise<Entity>;
   deleteRecord(recordId: string): Promise<ComponentFramework.LookupValue | ErrorDetails>;
   openRecordDeleteDialog(): Promise<ComponentFramework.NavigationApi.ConfirmDialogResponse>;
   openErrorDialog(error: any): Promise<void>;
@@ -147,6 +149,16 @@ export class DataverseService implements IDataverseService {
       entities.push(...result.entities);
     }
     return entities;
+  }
+
+  public async retrieveMultipleRecords(entityName: string, options: string): Promise<Entity[]> {
+    const result = await this._context.webAPI.retrieveMultipleRecords(entityName, options);
+    return result.entities;
+  }
+
+  public async getRecord(recordId: string): Promise<Entity> {
+    const result = await this._context.webAPI.retrieveRecord(this._targetEntityType, recordId);
+    return result;
   }
 
   public async deleteRecord(recordId: string):

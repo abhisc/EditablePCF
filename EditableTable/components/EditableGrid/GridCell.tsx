@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { IColumn } from '@fluentui/react';
 
 import { LookupFormat } from '../InputComponents/LookupFormat';
@@ -30,6 +30,7 @@ export type ParentEntityMetadata = {
 export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps) => {
   const dispatch = useAppDispatch();
   const cell = row.columns.find((column: Column) => column.schemaName === currentColumn.key);
+  const [isInvoiceSelected, setIsInvoiceSelected] = useState(false);
 
   const fieldsRequirementLevels = useAppSelector(state => state.dataset.requirementLevels);
   const fieldRequirementLevel = fieldsRequirementLevels.find(requirementLevel =>
@@ -76,13 +77,18 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
       }));
     }, []);
 
+  const handleInvoiceSelection = (selected: boolean) => {
+    setIsInvoiceSelected(selected);
+  };
+
   const props = {
     fieldName: currentColumn?.fieldName ? currentColumn?.fieldName : '',
     rowId: row.key,
     fieldId: `${currentColumn?.fieldName || ''}${row.key}`,
     formattedValue: cell?.formattedValue,
     isRequired,
-    isDisabled: isInactiveRecord || isCalculatedField,
+    isDisabled: isInactiveRecord || isCalculatedField ||
+    (!isInvoiceSelected && currentColumn.key !== 'nb_invoice'),
     isSecured: !hasUpdateAccess,
     _onChange: _changedValue,
     _service,
@@ -99,8 +105,13 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
         return <DateTimeFormat dateOnly={true} value={cell.rawValue} {...props} />;
 
       case 'Lookup.Simple':
-        return <LookupFormat value={cell.lookup} parentEntityMetadata={parentEntityMetadata}
-          {...props} />;
+        return <LookupFormat
+          value={cell.lookup}
+          parentEntityMetadata={parentEntityMetadata}
+          onInvoiceSelected=
+            {currentColumn.key === 'nb_invoice' ? handleInvoiceSelection : undefined}
+          {...props}
+        />;
 
       case 'Lookup.Customer':
       case 'Lookup.Owner':
