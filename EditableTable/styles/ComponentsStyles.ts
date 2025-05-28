@@ -43,6 +43,13 @@ export const timePickerStyles = (required: boolean): Partial<IComboBoxStyles> =>
 export const optionSetStyles = (required: boolean): Partial<IComboBoxStyles> => ({
   container: {
     marginRight: required ? '10px' : '0px',
+    backgroundColor: undefined,
+  },
+  root: {
+    backgroundColor: 'white',
+  },
+  input: {
+    backgroundColor: 'white',
   },
 });
 
@@ -68,7 +75,7 @@ IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> => ({
     minWidth: 30,
     overflow: 'hidden',
     marginRight: required ? '10px' : '0px',
-    backgroundColor: 'white',
+    backgroundColor: isDisabled ? 'white' : 'white',
   },
   input: { overflow: 'hidden' },
 });
@@ -112,6 +119,7 @@ export const lookupSelectedOptionStyles: IButtonStyles = {
 export const numberFormatStyles = (required: boolean): Partial<ISpinButtonStyles> => ({
   root: {
     minWidth: '20px',
+    backgroundColor: 'white',
   },
   arrowButtonsContainer: {
     display: 'none',
@@ -121,6 +129,10 @@ export const numberFormatStyles = (required: boolean): Partial<ISpinButtonStyles
     pointerEvents: 'all',
     minWidth: '20px',
     overflow: 'hidden',
+    backgroundColor: 'inherit',
+  },
+  input: {
+    backgroundColor: 'white',
   },
 });
 
@@ -130,6 +142,13 @@ export const wholeFormatStyles = (required: boolean): Partial<IComboBoxStyles> =
   },
   container: {
     marginRight: required ? '10px' : '0px',
+    backgroundColor: undefined,
+  },
+  root: {
+    backgroundColor: 'white',
+  },
+  input: {
+    backgroundColor: 'white',
   },
 });
 

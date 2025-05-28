@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { IColumn } from '@fluentui/react';
 
 import { LookupFormat } from '../InputComponents/LookupFormat';
@@ -31,6 +31,12 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
   const dispatch = useAppDispatch();
   const cell = row.columns.find((column: Column) => column.schemaName === currentColumn.key);
   const [isInvoiceSelected, setIsInvoiceSelected] = useState(false);
+
+  // Check if this row has an invoice selected
+  useEffect(() => {
+    const invoiceCell = row.columns.find((column: Column) => column.schemaName === 'nb_invoice');
+    setIsInvoiceSelected(!!invoiceCell?.rawValue);
+  }, [row.columns]);
 
   const fieldsRequirementLevels = useAppSelector(state => state.dataset.requirementLevels);
   const fieldRequirementLevel = fieldsRequirementLevels.find(requirementLevel =>
@@ -77,8 +83,29 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
       }));
     }, []);
 
-  const handleInvoiceSelection = (selected: boolean) => {
+  const handleInvoiceSelection = async (selected: boolean, invoiceTag?: any) => {
     setIsInvoiceSelected(selected);
+    if (selected && invoiceTag && invoiceTag.key) {
+      try {
+        // Fetch invoice details using the correct entity name and select only the due amount
+        const invoice = await _service.getContext().webAPI.retrieveRecord(
+          'nb_ae_invoice',
+          invoiceTag.key,
+          '?$select=nb_invoicedueamount',
+        );
+        const dueAmount = invoice.nb_invoicedueamount;
+        // Update the row in Redux
+        dispatch(updateRow({
+          rowKey: row.key,
+          columnName: 'a_2b5cb1a4ce044b37af2c552376613842.nb_invoicedueamount',
+          newValue: dueAmount,
+        }));
+      }
+      catch (error) {
+        // Optionally handle error
+        console.error('Failed to fetch invoice details:', error);
+      }
+    }
   };
 
   const props = {
@@ -88,7 +115,8 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
     formattedValue: cell?.formattedValue,
     isRequired,
     isDisabled: isInactiveRecord || isCalculatedField ||
-    (!isInvoiceSelected && currentColumn.key !== 'nb_invoice'),
+      (!isInvoiceSelected && currentColumn.key !== 'nb_invoice' &&
+        currentColumn.key !== 'nb_invoicevalue'),
     isSecured: !hasUpdateAccess,
     _onChange: _changedValue,
     _service,

@@ -27,7 +27,7 @@ export interface ILookupProps {
   isDisabled: boolean;
   _onChange: Function;
   _service: IDataverseService;
-  onInvoiceSelected?: (isSelected: boolean) => void;
+  onInvoiceSelected?: (isSelected: boolean, selectedTag?: ITag) => void;
 }
 
 export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetadata,
@@ -171,13 +171,13 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
       _onChange(`/${currentLookup?.entityPluralName}(${items[0].key})`, items[0],
         currentLookup?.reference?.entityNavigation);
       if (fieldName === 'nb_invoice' && onInvoiceSelected) {
-        onInvoiceSelected(true);
+        onInvoiceSelected(true, items[0]);
       }
     }
     else {
       _onChange(null, null, currentLookup?.reference?.entityNavigation);
       if (fieldName === 'nb_invoice' && onInvoiceSelected) {
-        onInvoiceSelected(false);
+        onInvoiceSelected(false, undefined);
       }
     }
   };

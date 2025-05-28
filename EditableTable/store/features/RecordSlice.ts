@@ -12,7 +12,7 @@ export type Record = {
   data: [
     {
       fieldName: string,
-      newValue: any,
+      newValue: unknown,
       fieldType: string
     }
   ]
@@ -41,6 +41,9 @@ type DeleteRecordPayload = {
   recordIds: string[],
   _service: IDataverseService,
 };
+
+// Add type for lookup value
+type LookupValue = string;
 
 const isRequiredFieldEmpty =
   (requirementLevels: RequirementLevel[], rows: Row[], _service: IDataverseService) =>
@@ -89,6 +92,30 @@ export const saveRecords = createAsyncThunk<void, IDataverseService, AsyncThunkC
         _service.openErrorDialog(consolidatedError);
       }
     }
+
+    // Update invoice status to locked for all changed records that have an invoice
+    const invoiceUpdates = changedRecords.map(async record => {
+      const invoiceField = record.data.find(data => data.fieldName === 'nb_invoice');
+      if (invoiceField?.newValue) {
+        try {
+          const lookupValue = invoiceField.newValue as LookupValue;
+          const match = lookupValue.match(/\(([^)]+)\)/);
+          if (match && match[1]) {
+            const invoiceId = match[1];
+            const record = {
+              // eslint-disable-next-line camelcase
+              nb_invoicestatus: 124840001, // Locked status
+            };
+            await _service.getContext().webAPI.updateRecord('nb_ae_invoice', invoiceId, record);
+          }
+        }
+        catch (error) {
+          console.error('Failed to update invoice status:', error);
+        }
+      }
+    });
+
+    await Promise.all(invoiceUpdates);
   },
 );
 

@@ -37,13 +37,16 @@ export const NumberFormat = memo(({ fieldId, fieldName, value, rowId, isRequired
 
   let currentCurrency: CurrencySymbol | null = null;
   const currentNumber = numbers.find(num => num.fieldName === fieldName);
-  if (changedTransactionId?.newValue) {
-    const transactionId = changedTransactionId.newValue.match(/\(([^)]+)\)/)[1];
-    _service.getCurrencyById(transactionId).then(result => {
-      currentCurrency = { recordId: rowId || '',
-        symbol: result.symbol,
-        precision: result.precision };
-    });
+  if (changedTransactionId?.newValue && typeof changedTransactionId.newValue === 'string') {
+    const match = changedTransactionId.newValue.match(/\(([^)]+)\)/);
+    if (match && match[1]) {
+      const transactionId = match[1];
+      _service.getCurrencyById(transactionId).then(result => {
+        currentCurrency = { recordId: rowId || '',
+          symbol: result.symbol,
+          precision: result.precision };
+      });
+    }
   }
 
   if (currentCurrency === null) {

@@ -137,12 +137,34 @@ export const datasetSlice = createSlice({
 
     updateRow: (state, action: PayloadAction<Updates>) => {
       const changedRow = state.rows.find(row => row.key === action.payload.rowKey);
-      const changedColumn = changedRow!.columns
-        .find(column => column.schemaName === action.payload.columnName);
+      if (!changedRow) return; // row not found, do nothing
 
-      changedColumn!.rawValue = action.payload.newValue || undefined;
-      changedColumn!.formattedValue = action.payload.newValue;
-      changedColumn!.lookup = action.payload.newValue;
+      console.log('[updateRow] rowKey:', action.payload.rowKey);
+      console.log('[updateRow] columnName:', action.payload.columnName);
+      console.log('[updateRow] columns before:', changedRow.columns.map(col => col.schemaName));
+
+      const changedColumn =
+        changedRow.columns.find(column => column.schemaName === action.payload.columnName);
+
+      // If the column does not exist, add it (with minimal info)
+      if (!changedColumn) {
+        changedRow.columns.push({
+          schemaName: action.payload.columnName,
+          rawValue: action.payload.newValue || undefined,
+          formattedValue: action.payload.newValue,
+          lookup: action.payload.newValue,
+          type: '', // Optionally set the correct type if known
+        });
+        console.log('[updateRow] columns after add:',
+          changedRow.columns.map(col => col.schemaName));
+        return;
+      }
+
+      changedColumn.rawValue = action.payload.newValue || undefined;
+      changedColumn.formattedValue = action.payload.newValue;
+      changedColumn.lookup = action.payload.newValue;
+      console.log('[updateRow] columns after update:',
+        changedRow.columns.map(col => col.schemaName));
     },
 
     addNewRow: (state, action: PayloadAction<Row>) => {
