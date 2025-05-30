@@ -35,6 +35,11 @@ export const NumberFormat = memo(({ fieldId, fieldName, value, rowId, isRequired
   const changedTransactionId = changedRecord?.data.find(data =>
     data.fieldName === 'transactioncurrencyid');
 
+  // Get the due amount from the row
+  const dueAmountField = changedRecord?.data.find(data => 
+    data.fieldName === 'a_2b5cb1a4ce044b37af2c552376613842.nb_invoicedueamount');
+  const dueAmount = dueAmountField?.newValue || 0;
+
   let currentCurrency: CurrencySymbol | null = null;
   const currentNumber = numbers.find(num => num.fieldName === fieldName);
   if (changedTransactionId?.newValue && typeof changedTransactionId.newValue === 'string') {
@@ -68,17 +73,33 @@ export const NumberFormat = memo(({ fieldId, fieldName, value, rowId, isRequired
   const onNumberChange = (newValue?: string) => {
     if (newValue === '') {
       _onChange(null, '');
+      dispatch(setInvalidFields({ fieldId, isInvalid: false, errorMessage: '' }));
     }
     else if (currentCurrency && currentNumber) {
+      // Add validation for nb_invoicevalue
+      if (fieldName === 'nb_invoicevalue' && dueAmount !== undefined) {
+        const enteredValue = formatNumber(_service, newValue!);
+        if (enteredValue > dueAmount) {
+          dispatch(setInvalidFields({ 
+            fieldId, 
+            isInvalid: true, 
+            errorMessage: 'Invoice value cannot exceed the due amount' 
+          }));
+          return;
+        }
+      }
+
       if (currentNumber?.precision === 2) {
         changeNumberFormat(currentCurrency, currentNumber, currentCurrency.precision, newValue);
       }
       else {
         changeNumberFormat(currentCurrency, currentNumber, currentNumber.precision, newValue);
       }
+      dispatch(setInvalidFields({ fieldId, isInvalid: false, errorMessage: '' }));
     }
     else {
       changeNumberFormat(currentCurrency, currentNumber, currentNumber?.precision, newValue);
+      dispatch(setInvalidFields({ fieldId, isInvalid: false, errorMessage: '' }));
     }
   };
 
