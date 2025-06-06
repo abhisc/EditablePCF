@@ -52,7 +52,7 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
       console.log('Parent Entity Type:', parentEntityMetadata?.entityTypeName);
       console.log('Parent Entity ID:', parentEntityMetadata?.entityId);
 
-      if (fieldName === 'nb_invoice' &&
+      if (fieldName === 'nb_supplierreference' &&
         parentEntityMetadata?.entityTypeName === 'nb_ae_chequeregister') {
         try {
           console.log('Attempting to get parent record...');
@@ -81,7 +81,7 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
               const newFilteredOptions = filteredInvoices.map((invoice: Entity) => {
                 console.log('Processing invoice:', invoice);
                 const displayName = invoice.nb_supplierreference ||
-                  `Invoice ${invoice.nb_ae_invoiceid.substring(0, 8)}`;
+                  `Supplier Ref ${invoice.nb_ae_invoiceid.substring(0, 8)}`;
                 console.log('Generated display name:', displayName);
                 return {
                   key: invoice.nb_ae_invoiceid,
@@ -149,7 +149,7 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
   }
 
   const initialValues = (): ITag[] => {
-    const optionsToUse = fieldName === 'nb_invoice' ? filteredOptions : options;
+    const optionsToUse = fieldName === 'nb_supplierreference' ? filteredOptions : options;
     if (optionsToUse.length > MAX_NUMBER_OF_OPTIONS) {
       return optionsToUse.slice(0, MAX_NUMBER_OF_OPTIONS);
     }
@@ -159,7 +159,7 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
   const filterSuggestedTags = (filterText: string): ITag[] => {
     if (filterText.length === 0) return [];
 
-    const optionsToUse = fieldName === 'nb_invoice' ? filteredOptions : options;
+    const optionsToUse = fieldName === 'nb_supplierreference' ? filteredOptions : options;
     return optionsToUse.filter(tag => {
       if (tag.name === null) return false;
       return tag.name.toLowerCase().includes(filterText.toLowerCase());
@@ -170,13 +170,13 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
     if (items !== undefined && items.length > 0) {
       _onChange(`/${currentLookup?.entityPluralName}(${items[0].key})`, items[0],
         currentLookup?.reference?.entityNavigation);
-      if (fieldName === 'nb_invoice' && onInvoiceSelected) {
+      if (fieldName === 'nb_supplierreference' && onInvoiceSelected) {
         onInvoiceSelected(true, items[0]);
       }
     }
     else {
       _onChange(null, null, currentLookup?.reference?.entityNavigation);
-      if (fieldName === 'nb_invoice' && onInvoiceSelected) {
+      if (fieldName === 'nb_supplierreference' && onInvoiceSelected) {
         onInvoiceSelected(false, undefined);
       }
     }
@@ -202,7 +202,7 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
     />;
 
   // Determine if this field should be editable
-  const isEditable = fieldName === 'nb_invoice' || value !== undefined;
+  const isEditable = fieldName === 'nb_supplierreference' || value !== undefined;
 
   return <div>
     <TagPicker
@@ -215,7 +215,7 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
       itemLimit={1}
       pickerSuggestionsProps={{ noResultsFoundText: 'No Results Found' }}
       styles={lookupFormatStyles(isRequired, isSecured ||
-        (!isEditable && fieldName !== 'nb_invoice') || isDisabled || isOffline)}
+        (!isEditable && fieldName !== 'nb_supplierreference') || isDisabled || isOffline)}
       onRenderItem={ !isSecured && isEditable &&
         !isDisabled && !isOffline ? _onRenderItem : undefined}
       onBlur={() => {
@@ -227,7 +227,8 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
             errorMessage: 'Required fields must be filled in' }));
         }
       }}
-      disabled={isSecured || (!isEditable && fieldName !== 'nb_invoice') || isDisabled || isOffline}
+      disabled={isSecured ||
+        (!isEditable && fieldName !== 'nb_supplierreference') || isDisabled || isOffline}
       inputProps={{
         onFocus: () => dispatch(setInvalidFields({ fieldId, isInvalid: false, errorMessage: '' })),
       }}

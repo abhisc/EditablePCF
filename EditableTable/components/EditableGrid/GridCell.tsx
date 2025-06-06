@@ -34,8 +34,9 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
 
   // Check if this row has an invoice selected
   useEffect(() => {
-    const invoiceCell = row.columns.find((column: Column) => column.schemaName === 'nb_invoice');
-    setIsInvoiceSelected(!!invoiceCell?.rawValue);
+    const supplierRefCell =
+      row.columns.find((column: Column) => column.schemaName === 'nb_supplierreference');
+    setIsInvoiceSelected(!!supplierRefCell?.rawValue);
   }, [row.columns]);
 
   const fieldsRequirementLevels = useAppSelector(state => state.dataset.requirementLevels);
@@ -87,23 +88,37 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
     setIsInvoiceSelected(selected);
     if (selected && invoiceTag && invoiceTag.key) {
       try {
-        // Fetch invoice details using the correct entity name and select only the due amount
+        // Fetch invoice details including currency
         const invoice = await _service.getContext().webAPI.retrieveRecord(
           'nb_ae_invoice',
           invoiceTag.key,
-          '?$select=nb_invoicedueamount',
+          '?$select=nb_invoicedueamount,_transactioncurrencyid_value',
         );
         const dueAmount = invoice.nb_invoicedueamount;
-        // Update the row in Redux
+        const currencyId = invoice._transactioncurrencyid_value;
+
+        // Update due amount in the row
         dispatch(updateRow({
           rowKey: row.key,
           columnName: 'a_2b5cb1a4ce044b37af2c552376613842.nb_invoicedueamount',
           newValue: dueAmount,
         }));
+
+        // Fetch and store currency info for this row
+        if (currencyId) {
+          const currency = await _service.getCurrencyById(currencyId);
+          dispatch({
+            type: 'number/addCurrencySymbol',
+            payload: {
+              recordId: row.key,
+              symbol: currency.symbol,
+              precision: currency.precision,
+            },
+          });
+        }
       }
       catch (error) {
-        // Optionally handle error
-        console.error('Failed to fetch invoice details:', error);
+        console.error('Failed to fetch invoice details or currency:', error);
       }
     }
   };
@@ -115,7 +130,7 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
     formattedValue: cell?.formattedValue,
     isRequired,
     isDisabled: isInactiveRecord || isCalculatedField ||
-      (!isInvoiceSelected && currentColumn.key !== 'nb_invoice' &&
+      (!isInvoiceSelected && currentColumn.key !== 'nb_supplierreference' &&
         currentColumn.key !== 'nb_invoicevalue'),
     isSecured: !hasUpdateAccess,
     _onChange: _changedValue,
@@ -136,8 +151,9 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
         return <LookupFormat
           value={cell.lookup}
           parentEntityMetadata={parentEntityMetadata}
-          onInvoiceSelected=
-            {currentColumn.key === 'nb_invoice' ? handleInvoiceSelection : undefined}
+          onInvoiceSelected={
+            currentColumn.key === 'nb_supplierreference' ? handleInvoiceSelection : undefined
+          }
           {...props}
         />;
 

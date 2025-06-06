@@ -84,7 +84,20 @@ export const getCurrencySymbols = createAsyncThunk<CurrencySymbol[], CurrencyPay
 const NumberSlice = createSlice({
   name: 'number',
   initialState,
-  reducers: {},
+  reducers: {
+    addCurrencySymbol: (state, action) => {
+      const { recordId, symbol, precision } = action.payload;
+      const existing = state.currencySymbols.find(c => c.recordId === recordId);
+      if (existing) {
+        existing.symbol = symbol;
+        existing.precision = precision;
+      }
+      else {
+        console.log('Adding currency symbol:', { recordId, symbol, precision });
+        state.currencySymbols.push({ recordId, symbol, precision });
+      }
+    },
+  },
   extraReducers(builder) {
     builder.addCase(getNumberFieldsMetadata.fulfilled, (state, action) => {
       state.numberFieldsMetadata = [...action.payload];
@@ -105,4 +118,5 @@ const NumberSlice = createSlice({
   },
 });
 
+export const { addCurrencySymbol } = NumberSlice.actions;
 export default NumberSlice.reducer;

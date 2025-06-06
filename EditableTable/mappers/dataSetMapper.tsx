@@ -89,6 +89,20 @@ export const mapDataSetRows = (dataset: DataSet): Row[] =>
       type: column.dataType,
     }));
 
+    // Ensure due amount field is present
+    const dueAmountFieldName = 'a_2b5cb1a4ce044b37af2c552376613842.nb_invoicedueamount';
+    if (!columns.find(col => col.schemaName === dueAmountFieldName)) {
+      const dueAmountValue = record.getValue(dueAmountFieldName);
+      if (dueAmountValue !== undefined) {
+        columns.push({
+          schemaName: dueAmountFieldName,
+          rawValue: dueAmountValue?.toString() || null,
+          formattedValue: record.getFormattedValue(dueAmountFieldName),
+          type: 'Currency',
+        });
+      }
+    }
+
     return {
       key: record.getRecordId(),
       columns,
