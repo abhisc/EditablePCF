@@ -48,7 +48,7 @@ export const mapDataSetColumns =
     .sort((column1, column2) => column1.order - column2.order)
     .filter(column => !column.isHidden)
     .map<IColumn>((column): IColumn => ({
-      name: column.displayName,
+      name: column.displayName.replace(/ \(Supplier Reference\)/g, ''),
       fieldName: column.name,
       minWidth: column.dataType === 'DateAndTime.DateAndTime'
         ? 55 : 20,
@@ -60,12 +60,12 @@ export const mapDataSetColumns =
       isSorted: sortingColumns.some(col => col.name === column.name),
       isSortedDescending: sortingColumns.find(col => col.name === column.name)?.sortDirection === 1,
       showSortIconWhenUnsorted: true,
-      ariaLabel: column.displayName,
+      ariaLabel: column.displayName.replace(/ \(Supplier Reference\)/g, ''),
       columnActionsMode: column.dataType === 'MultiSelectPicklist'
         ? ColumnActionsMode.disabled : ColumnActionsMode.hasDropdown,
       onRenderHeader: () => <>
-        <TooltipHost content={column.displayName}>
-          <span>{column.displayName}</span>
+        <TooltipHost content={column.displayName.replace(/ \(Supplier Reference\)/g, '')}>
+          <span>{column.displayName.replace(/ \(Supplier Reference\)/g, '')}</span>
         </TooltipHost>
       </>,
     }));
