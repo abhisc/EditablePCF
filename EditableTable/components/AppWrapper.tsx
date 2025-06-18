@@ -1,11 +1,11 @@
-import { ScrollablePane, Stack } from '@fluentui/react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Provider } from 'react-redux';
-import { IDataverseService } from '../services/DataverseService';
-import { Store } from '../utils/types';
+import { ScrollablePane, Stack } from '@fluentui/react';
 import { EditableGrid } from './EditableGrid/EditableGrid';
 import { Loading } from './Loading';
 import { getContainerHeight } from '../utils/commonUtils';
+import { Store } from '../utils/types';
+import { IDataverseService } from '../services/DataverseService';
 
 type DataSet = ComponentFramework.PropertyTypes.DataSet;
 

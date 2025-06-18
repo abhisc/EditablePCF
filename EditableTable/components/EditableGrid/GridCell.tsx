@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { IColumn } from '@fluentui/react';
+import { IColumn, ITag } from '@fluentui/react';
 
 import { LookupFormat } from '../InputComponents/LookupFormat';
 import { NumberFormat } from '../InputComponents/NumberFormat';
@@ -54,6 +54,10 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
     field.fieldName === currentColumn.key);
   let hasUpdateAccess = securedField?.hasUpdateAccess || false;
 
+  // Check if this record has been saved
+  const savedRecordIds = useAppSelector(state => state.dataset.savedRecordIds);
+  const isRecordSaved = savedRecordIds.includes(row.key);
+
   let parentEntityMetadata: ParentEntityMetadata | undefined;
   let ownerEntityMetadata: string | undefined;
   if (isNewRow(row)) {
@@ -69,7 +73,7 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
   const isInactiveRecord = inactiveRecord?.isInactive || false;
 
   const _changedValue = useCallback(
-    (newValue: any, rawValue?: any, lookupEntityNavigation?: string): void => {
+    (newValue: unknown, rawValue?: unknown, lookupEntityNavigation?: string): void => {
       dispatch(setChangedRecords({
         id: row.key,
         fieldName: lookupEntityNavigation || currentColumn.key,
@@ -84,23 +88,23 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
       }));
     }, []);
 
-  const handleInvoiceSelection = async (selected: boolean, invoiceTag?: any) => {
+  const handleInvoiceSelection = async (selected: boolean, invoiceTag?: ITag) => {
     setIsInvoiceSelected(selected);
     if (selected && invoiceTag && invoiceTag.key) {
       try {
         // Fetch invoice details including currency
         const invoice = await _service.getContext().webAPI.retrieveRecord(
           'nb_ae_invoice',
-          invoiceTag.key,
-          '?$select=nb_invoicedueamount,_transactioncurrencyid_value',
+          invoiceTag.key.toString(),
+          '?$select=nb_invoice_amt,_transactioncurrencyid_value',
         );
-        const dueAmount = invoice.nb_invoicedueamount;
+        const dueAmount = invoice.nb_invoice_amt;
         const currencyId = invoice._transactioncurrencyid_value;
 
         // Update due amount in the row
         dispatch(updateRow({
           rowKey: row.key,
-          columnName: 'a_2b5cb1a4ce044b37af2c552376613842.nb_invoicedueamount',
+          columnName: 'a_04b6d9baaa2840ac9f6b05c104588d0d.nb_invoice_amt',
           newValue: dueAmount,
         }));
 
@@ -125,13 +129,12 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
 
   const props = {
     fieldName: currentColumn?.fieldName ? currentColumn?.fieldName : '',
-    rowId: row.key,
     fieldId: `${currentColumn?.fieldName || ''}${row.key}`,
     formattedValue: cell?.formattedValue,
     isRequired,
-    isDisabled: isInactiveRecord || isCalculatedField ||
+    isDisabled: isInactiveRecord || isCalculatedField || isRecordSaved ||
       (!isInvoiceSelected && currentColumn.key !== 'nb_supplierreference' &&
-        currentColumn.key !== 'nb_invoicevalue'),
+        currentColumn.key !== 'nb_invoice_posting_amt'),
     isSecured: !hasUpdateAccess,
     _onChange: _changedValue,
     _service,
@@ -142,10 +145,10 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
   if (currentColumn !== undefined && cell !== undefined) {
     switch (currentColumn.data) {
       case 'DateAndTime.DateAndTime':
-        return <DateTimeFormat dateOnly={false} value={cell.rawValue} {...props} />;
+        return <DateTimeFormat dateOnly={false} value={cell.rawValue} rowId={row.key} {...props} />;
 
       case 'DateAndTime.DateOnly':
-        return <DateTimeFormat dateOnly={true} value={cell.rawValue} {...props} />;
+        return <DateTimeFormat dateOnly={true} value={cell.rawValue} rowId={row.key} {...props} />;
 
       case 'Lookup.Simple':
         return <LookupFormat
@@ -154,22 +157,43 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
           onInvoiceSelected={
             currentColumn.key === 'nb_supplierreference' ? handleInvoiceSelection : undefined
           }
+          rowId={row.key}
           {...props}
         />;
 
       case 'Lookup.Customer':
       case 'Lookup.Owner':
-        return <TextFormat value={cell.formattedValue} {...props} isDisabled={true} />;
+        return <TextFormat
+          value={cell.formattedValue}
+          rowId={row.key}
+          {...props}
+          isDisabled={true}
+        />;
 
       case 'OptionSet':
-        return <OptionSetFormat value={cell.rawValue} isMultiple={false} {...props} />;
+        return <OptionSetFormat
+          value={cell.rawValue}
+          isMultiple={false}
+          rowId={row.key}
+          {...props}
+        />;
 
       case 'TwoOptions':
-        return <OptionSetFormat value={cell.rawValue} isMultiple={false} isTwoOptions={true}
-          {...props} />;
+        return <OptionSetFormat
+          value={cell.rawValue}
+          isMultiple={false}
+          isTwoOptions={true}
+          rowId={row.key}
+          {...props}
+        />;
 
       case 'MultiSelectPicklist':
-        return <OptionSetFormat value={cell.rawValue} isMultiple={true} {...props} />;
+        return <OptionSetFormat
+          value={cell.rawValue}
+          isMultiple={true}
+          rowId={row.key}
+          {...props}
+        />;
 
       case 'Decimal':
         return <NumberFormat value={cell.formattedValue ?? ''} {...props} />;
@@ -184,18 +208,38 @@ export const GridCell = ({ _service, row, currentColumn, index }: IGridSetProps)
         return <NumberFormat value={cell.formattedValue ?? ''} {...props} />;
 
       case 'Whole.Duration':
-        return <WholeFormat value={cell.rawValue} type={'duration'} {...props} />;
+        return <WholeFormat
+          value={cell.rawValue}
+          type={'duration'}
+          rowId={row.key}
+          {...props}
+        />;
 
       case 'Whole.Language':
-        return <WholeFormat value={cell.rawValue} type={'language'} {...props} />;
+        return <WholeFormat
+          value={cell.rawValue}
+          type={'language'}
+          rowId={row.key}
+          {...props}
+        />;
 
       case 'Whole.TimeZone':
-        return <WholeFormat value={cell.rawValue} type={'timezone'} {...props} />;
+        return <WholeFormat
+          value={cell.rawValue}
+          type={'timezone'}
+          rowId={row.key}
+          {...props}
+        />;
 
       case 'SingleLine.Text':
       case 'Multiple':
       default:
-        return <TextFormat value={cell.formattedValue || ''} type={cell.type} {...props} />;
+        return <TextFormat
+          value={cell.formattedValue || ''}
+          type={cell.type}
+          rowId={row.key}
+          {...props}
+        />;
     }
   }
 

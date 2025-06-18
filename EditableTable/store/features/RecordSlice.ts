@@ -93,6 +93,11 @@ export const saveRecords = createAsyncThunk<void, IDataverseService, AsyncThunkC
       }
     }
 
+    // Mark all changed records as saved
+    changedRecords.forEach(record => {
+      thunkApi.dispatch({ type: 'dataset/markRecordAsSaved', payload: record.id });
+    });
+
     // Update invoice status to locked for all changed records that have an invoice
     const invoiceUpdates = changedRecords.map(async record => {
       const invoiceField = record.data.find(data => data.fieldName === 'nb_invoice');

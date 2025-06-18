@@ -20,17 +20,27 @@ export interface IDropDownProps {
   isDisabled: boolean;
   isSecured: boolean;
   _service: IDataverseService;
+  rowId?: string;
 }
 
 export const OptionSetFormat = memo(({ fieldId, fieldName, value, formattedValue, isMultiple,
-  isRequired, isTwoOptions, isDisabled, isSecured, _onChange, _service }: IDropDownProps) => {
+  isRequired, isTwoOptions, isDisabled, isSecured,
+  _onChange, _service, rowId }: IDropDownProps) => {
   let currentValue = value;
   const dispatch = useAppDispatch();
 
   const dropdowns = useAppSelector(state => state.dropdown.dropdownFields);
   const currentDropdown = dropdowns.find(dropdown => dropdown.fieldName === fieldName);
   let options = currentDropdown?.options ?? [];
-  const disabled = fieldName === 'statuscode' || fieldName === 'statecode' || isDisabled;
+
+  // Check if this record has been saved
+  const savedRecordIds = useAppSelector(state => state.dataset.savedRecordIds);
+  const isRecordSaved = rowId ? savedRecordIds.includes(rowId) : false;
+
+  const disabled = fieldName === 'statuscode' ||
+    fieldName === 'statecode' ||
+    isDisabled ||
+    isRecordSaved;
 
   if (_service.isStatusField(fieldName) && !currentValue) {
     currentValue = options.find(option =>

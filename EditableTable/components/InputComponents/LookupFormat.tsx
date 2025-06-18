@@ -28,10 +28,12 @@ export interface ILookupProps {
   _onChange: Function;
   _service: IDataverseService;
   onInvoiceSelected?: (isSelected: boolean, selectedTag?: ITag) => void;
+  rowId?: string;
 }
 
 export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetadata,
-  isSecured, isRequired, isDisabled, _onChange, _service, onInvoiceSelected }: ILookupProps) => {
+  isSecured, isRequired, isDisabled, _onChange, _service,
+  onInvoiceSelected, rowId }: ILookupProps) => {
   const picker = React.useRef(null);
   const dispatch = useAppDispatch();
 
@@ -40,6 +42,10 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
   const options = currentLookup?.options ?? [];
   const currentOption = value ? [value] : [];
   const isOffline = _service.isOffline();
+
+  // Check if this record has been saved
+  const savedRecordIds = useAppSelector(state => state.dataset.savedRecordIds);
+  const isRecordSaved = rowId ? savedRecordIds.includes(rowId) : false;
 
   // Add state to track filtered options
   const [filteredOptions, setFilteredOptions] = React.useState<ITag[]>([]);
@@ -202,7 +208,8 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
     />;
 
   // Determine if this field should be editable
-  const isEditable = fieldName === 'nb_supplierreference' || value !== undefined;
+  const isEditable = (fieldName ===
+    'nb_supplierreference' || value !== undefined) && !isRecordSaved;
 
   return <div>
     <TagPicker
@@ -230,7 +237,11 @@ export const LookupFormat = memo(({ fieldId, fieldName, value, parentEntityMetad
       disabled={isSecured ||
         (!isEditable && fieldName !== 'nb_supplierreference') || isDisabled || isOffline}
       inputProps={{
-        onFocus: () => dispatch(setInvalidFields({ fieldId, isInvalid: false, errorMessage: '' })),
+        onFocus: () => dispatch(setInvalidFields({
+          fieldId,
+          isInvalid: false,
+          errorMessage: '',
+        })),
       }}
     />
     <FontIcon iconName={'AsteriskSolid'} className={asteriskClassStyle(isRequired)} />

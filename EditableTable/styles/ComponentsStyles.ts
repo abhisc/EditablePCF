@@ -117,7 +117,7 @@ export const lookupSelectedOptionStyles: IButtonStyles = {
 };
 
 export const numberFormatStyles =
-(required: boolean, isDisabled?: boolean): Partial<ISpinButtonStyles> => ({
+(required: boolean): Partial<ISpinButtonStyles> => ({
   root: {
     minWidth: '20px',
     backgroundColor: 'white',

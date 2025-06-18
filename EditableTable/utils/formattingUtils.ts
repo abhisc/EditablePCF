@@ -1,4 +1,4 @@
-import { IDropdownOption } from '@fluentui/react';
+import { IComboBoxOption } from '@fluentui/react';
 import { IDataverseService } from '../services/DataverseService';
 
 export const formatNumber = (_service: IDataverseService, value: string) =>

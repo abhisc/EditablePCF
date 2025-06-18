@@ -22,14 +22,19 @@ export interface ITextProps {
   isRequired: boolean;
   isSecured: boolean;
   _onChange: Function;
+  rowId?: string;
 }
 
 export const TextFormat = memo(({ fieldId, value, isRequired, isDisabled, type, isSecured,
-  fieldName, ownerValue, _onChange } : ITextProps) => {
+  fieldName, ownerValue, _onChange, rowId } : ITextProps) => {
   const currentValue = ownerValue !== undefined ? ownerValue : value;
   const dispatch = useAppDispatch();
   const textFields = useAppSelector(state => state.text.textFields);
   const currentTextField = textFields.find(textField => textField.fieldName === fieldName);
+
+  // Check if this record has been saved
+  const savedRecordIds = useAppSelector(state => state.dataset.savedRecordIds);
+  const isRecordSaved = rowId ? savedRecordIds.includes(rowId) : false;
 
   const onChange = (newValue: string) => {
     if (type?.includes('URL')) {
@@ -68,7 +73,7 @@ export const TextFormat = memo(({ fieldId, value, isRequired, isDisabled, type, 
         key={currentValue}
         title={currentValue}
         styles={textFieldStyles(isRequired)}
-        disabled={isDisabled || isSecured}
+        disabled={isDisabled || isSecured || isRecordSaved}
         onBlur={(event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
           const elem = event.target as HTMLInputElement;
           if (currentValue !== elem.value) {

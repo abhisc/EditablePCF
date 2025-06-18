@@ -16,13 +16,18 @@ export interface IWholeFormatProps {
   _onChange: Function;
   isRequired: boolean;
   isDisabled: boolean;
-  isSecured: boolean
+  isSecured: boolean;
+  rowId?: string;
 }
 
 export const WholeFormat = memo(({ fieldId, value, formattedValue, type, isDisabled, isSecured,
-  isRequired, _onChange } : IWholeFormatProps) => {
+  isRequired, _onChange, rowId } : IWholeFormatProps) => {
   const dispatch = useAppDispatch();
   const wholeFormat = useAppSelector(state => state.wholeFormat);
+
+  // Check if this record has been saved
+  const savedRecordIds = useAppSelector(state => state.dataset.savedRecordIds);
+  const isRecordSaved = rowId ? savedRecordIds.includes(rowId) : false;
 
   let options: IComboBoxOption[] = [];
   if (!isSecured) {
@@ -88,7 +93,7 @@ export const WholeFormat = memo(({ fieldId, value, formattedValue, type, isDisab
         title={formattedValue || ''}
         styles={wholeFormatStyles(isRequired)}
         allowFreeform={type === 'duration'}
-        disabled={isDisabled || isSecured}
+        disabled={isDisabled || isSecured || isRecordSaved}
         onBlur={() => checkValidation()}
         onFocus={() => dispatch(setInvalidFields({ fieldId, isInvalid: false, errorMessage: '' }))}
       />

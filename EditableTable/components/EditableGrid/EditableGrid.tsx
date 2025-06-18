@@ -33,6 +33,7 @@ import {
   readdNewRowsAfterDelete,
   removeNewRows,
   setRows,
+  clearSavedRecordIds,
 } from '../../store/features/DatasetSlice';
 
 import { Row, Column, mapDataSetColumns,
@@ -72,6 +73,7 @@ export const EditableGrid = ({ _service, _setContainerHeight,
     dispatch(clearChangedRecords());
     dispatch(clearChangedRecordsAfterRefresh());
     dispatch(removeNewRows());
+    dispatch(clearSavedRecordIds());
     dispatch(clearInvalidFields());
   };
 
@@ -136,7 +138,12 @@ export const EditableGrid = ({ _service, _setContainerHeight,
   useLoadStore(dataset, _service);
 
   const _renderItemColumn = (item: Row, index: number | undefined, column: IColumn | undefined) =>
-    <GridCell row={item} currentColumn={column!} _service={_service} index={index}/>;
+    <GridCell
+      row={item}
+      currentColumn={column || {} as IColumn}
+      _service={_service}
+      index={index}
+    />;
 
   const sort = (sortDirection: ComponentFramework.PropertyHelper.DataSetApi.Types.SortDirection,
     column?: IColumn) => {
@@ -202,10 +209,10 @@ export const EditableGrid = ({ _service, _setContainerHeight,
         <div onDoubleClick={event => {
           const target = event.target as HTMLInputElement;
           if (!target.className.includes('Button')) {
-            _service.openForm(props?.item.key);
+            _service.openForm(props?.item.key || '');
           }
         }}>
-          {defaultRender!(props)}
+          {defaultRender ? defaultRender(props) : null}
         </div> }
       onRenderDetailsHeader={_onRenderDetailsHeader}
       layoutMode={DetailsListLayoutMode.fixedColumns}

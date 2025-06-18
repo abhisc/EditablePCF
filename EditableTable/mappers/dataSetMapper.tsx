@@ -90,7 +90,7 @@ export const mapDataSetRows = (dataset: DataSet): Row[] =>
     }));
 
     // Ensure due amount field is present
-    const dueAmountFieldName = 'a_2b5cb1a4ce044b37af2c552376613842.nb_invoicedueamount';
+    const dueAmountFieldName = 'a_04b6d9baaa2840ac9f6b05c104588d0d.nb_invoice_amt';
     if (!columns.find(col => col.schemaName === dueAmountFieldName)) {
       const dueAmountValue = record.getValue(dueAmountFieldName);
       if (dueAmountValue !== undefined) {

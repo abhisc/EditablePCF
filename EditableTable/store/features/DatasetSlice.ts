@@ -38,6 +38,7 @@ export interface IDatasetState {
   calculatedFields: CalculatedField[],
   securedFields: FieldSecurity[],
   inactiveRecords: InactiveRecord[],
+  savedRecordIds: string[],
   isPending: boolean,
 }
 
@@ -49,6 +50,7 @@ const initialState: IDatasetState = {
   calculatedFields: [],
   securedFields: [],
   inactiveRecords: [],
+  savedRecordIds: [],
   isPending: true,
 };
 
@@ -132,53 +134,44 @@ export const datasetSlice = createSlice({
   initialState,
   reducers: {
     setRows: (state, action: PayloadAction<Row[]>) => {
-      state.rows = action.payload;
+      state.rows = [...action.payload];
     },
 
-    updateRow: (state, action: PayloadAction<Updates>) => {
-      const changedRow = state.rows.find(row => row.key === action.payload.rowKey);
-      if (!changedRow) return; // row not found, do nothing
-
-      console.log('[updateRow] rowKey:', action.payload.rowKey);
-      console.log('[updateRow] columnName:', action.payload.columnName);
-      console.log('[updateRow] columns before:', changedRow.columns.map(col => col.schemaName));
-
-      const changedColumn =
-        changedRow.columns.find(column => column.schemaName === action.payload.columnName);
-
-      // If the column does not exist, add it (with minimal info)
-      if (!changedColumn) {
-        changedRow.columns.push({
-          schemaName: action.payload.columnName,
-          rawValue: action.payload.newValue || undefined,
-          formattedValue: action.payload.newValue,
-          lookup: action.payload.newValue,
-          type: '', // Optionally set the correct type if known
-        });
-        console.log('[updateRow] columns after add:',
-          changedRow.columns.map(col => col.schemaName));
-        return;
+    updateRow: (state, action: PayloadAction<{rowKey: string,
+      columnName: string, newValue: any}>) => {
+      const { rowKey, columnName, newValue } = action.payload;
+      const row = state.rows.find(r => r.key === rowKey);
+      if (row) {
+        const column = row.columns.find(c => c.schemaName === columnName);
+        if (column) {
+          column.rawValue = newValue?.toString() || null;
+          column.formattedValue = newValue?.toString() || '';
+        }
       }
-
-      changedColumn.rawValue = action.payload.newValue || undefined;
-      changedColumn.formattedValue = action.payload.newValue;
-      changedColumn.lookup = action.payload.newValue;
-      console.log('[updateRow] columns after update:',
-        changedRow.columns.map(col => col.schemaName));
     },
 
     addNewRow: (state, action: PayloadAction<Row>) => {
-      state.rows.unshift(action.payload);
-    },
-
-    readdNewRowsAfterDelete: (state, action: PayloadAction<Row[]>) => {
-      state.newRows = action.payload;
+      state.newRows.push(action.payload);
     },
 
     removeNewRows: state => {
       state.newRows = [];
     },
 
+    readdNewRowsAfterDelete: (state, action: PayloadAction<Row[]>) => {
+      state.newRows = [...action.payload];
+    },
+
+    markRecordAsSaved: (state, action: PayloadAction<string>) => {
+      const recordId = action.payload;
+      if (!state.savedRecordIds.includes(recordId)) {
+        state.savedRecordIds.push(recordId);
+      }
+    },
+
+    clearSavedRecordIds: state => {
+      state.savedRecordIds = [];
+    },
   },
   extraReducers: builder => {
     builder.addCase(setCalculatedFields.fulfilled, (state, action) => {
@@ -234,6 +227,8 @@ export const {
   addNewRow,
   readdNewRowsAfterDelete,
   removeNewRows,
+  markRecordAsSaved,
+  clearSavedRecordIds,
 } = datasetSlice.actions;
 
 export default datasetSlice.reducer;

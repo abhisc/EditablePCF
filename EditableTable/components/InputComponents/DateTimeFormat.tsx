@@ -16,7 +16,6 @@ import {
   stackComboBox,
 } from '../../styles/ComponentsStyles';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { shallowEqual } from 'react-redux';
 import {
   getDateFormatWithHyphen,
   setTimeForDate,
@@ -34,28 +33,34 @@ import { timesList } from './timeList';
 import { IDataverseService } from '../../services/DataverseService';
 import { ErrorIcon } from '../ErrorIcon';
 import { setInvalidFields } from '../../store/features/ErrorSlice';
+import { DateMetadata } from '../../store/features/DateSlice';
 
 export interface IDatePickerProps {
   fieldId: string;
-  fieldName: string;
+  fieldName: string | undefined;
   dateOnly: boolean;
   value: string | null;
-  isDisabled: boolean;
   isRequired: boolean;
+  isDisabled: boolean;
   isSecured: boolean;
-  _onChange: any;
+  _onChange: Function;
   _service: IDataverseService;
+  rowId?: string;
 }
 
 export const DateTimeFormat = memo(({ fieldName, fieldId, dateOnly, value, isDisabled, isSecured,
-  isRequired, _onChange, _service }: IDatePickerProps) => {
+  isRequired, _onChange, _service, rowId }: IDatePickerProps) => {
   let timeKey: string | number | undefined;
   const options = [...timesList];
 
   const dispatch = useAppDispatch();
-  const dateFields = useAppSelector(state => state.date.dates, shallowEqual);
-  const currentDateMetadata = dateFields.find(dateField => dateField.fieldName === fieldName);
-  const dateBehavior = currentDateMetadata?.dateBehavior ?? '';
+  const savedRecordIds = useAppSelector(state => state.dataset.savedRecordIds);
+  const isRecordSaved = rowId ? savedRecordIds.includes(rowId) : false;
+
+  const dateFields = useAppSelector(state => state.date.dates);
+  const currentDateField = dateFields.find((dateField: DateMetadata) =>
+    dateField.fieldName === fieldName);
+  const dateBehavior = currentDateField?.dateBehavior ?? '';
 
   let currentDate: Date | undefined = value
     ? dateBehavior === 'TimeZoneIndependent'
@@ -149,7 +154,7 @@ export const DateTimeFormat = memo(({ fieldName, fieldId, dateOnly, value, isDis
         strings={localizedStrings}
         styles={datePickerStyles(dateOnly ? isRequired : false)}
         firstDayOfWeek={_service.getFirstDayOfWeek()}
-        disabled={isDisabled || isSecured}
+        disabled={isDisabled || isSecured || isRecordSaved}
         onAfterMenuDismiss={() => checkValidation(currentDate)}
         onClick={() => dispatch(setInvalidFields({ fieldId, isInvalid: false, errorMessage: '' }))}
         title={currentDate?.toDateString()}
@@ -162,7 +167,7 @@ export const DateTimeFormat = memo(({ fieldName, fieldId, dateOnly, value, isDis
           styles={timePickerStyles(isRequired)}
           selectedKey={timeKey}
           title={timeKey?.toString()}
-          disabled={isDisabled || isSecured}
+          disabled={isDisabled || isSecured || isRecordSaved}
           onBlur={() => checkValidation(currentDate)}
         />
       }

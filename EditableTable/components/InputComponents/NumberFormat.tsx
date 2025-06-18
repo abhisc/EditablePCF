@@ -35,11 +35,15 @@ export const NumberFormat = memo(({ fieldId, fieldName, value, rowId, isRequired
   const changedTransactionId = changedRecord?.data.find(data =>
     data.fieldName === 'transactioncurrencyid');
 
+  // Check if this record has been saved
+  const savedRecordIds = useAppSelector(state => state.dataset.savedRecordIds);
+  const isRecordSaved = rowId ? savedRecordIds.includes(rowId) : false;
+
   // Get the due amount from the main dataset row
   const rows = useAppSelector(state => state.dataset.rows);
   const currentRow = rows.find(row => row.key === rowId);
   const dueAmountColumn = currentRow?.columns.find(col =>
-    col.schemaName === 'a_2b5cb1a4ce044b37af2c552376613842.nb_invoicedueamount');
+    col.schemaName === 'a_04b6d9baaa2840ac9f6b05c104588d0d.nb_invoice_amt');
   const dueAmount = dueAmountColumn?.rawValue ? Number(dueAmountColumn.rawValue) : 0;
   console.log('Due Amount Column:', dueAmountColumn);
   console.log('Due Amount Raw Value:', dueAmount);
@@ -91,8 +95,8 @@ export const NumberFormat = memo(({ fieldId, fieldName, value, rowId, isRequired
       dispatch(setInvalidFields({ fieldId, isInvalid: false, errorMessage: '' }));
     }
     else if (currentCurrency && currentNumber) {
-      // Add validation for nb_invoicevalue
-      if (fieldName === 'nb_invoicevalue' && dueAmount !== undefined) {
+      // Add validation for nb_invoice_posting_amt
+      if (fieldName === 'nb_invoice_posting_amt' && dueAmount !== undefined) {
         const enteredValue = formatNumber(_service, newValue!);
         if (enteredValue > dueAmount) {
           dispatch(setInvalidFields({
@@ -135,10 +139,9 @@ export const NumberFormat = memo(({ fieldId, fieldName, value, rowId, isRequired
         min={currentNumber?.minValue}
         max={currentNumber?.maxValue}
         precision={currentNumber?.precision ?? 0}
-        styles={numberFormatStyles(isRequired,
-          currentNumber?.isBaseCurrency || isDisabled || isSecured)}
+        styles={numberFormatStyles(isRequired)}
         value={value}
-        disabled={currentNumber?.isBaseCurrency || isDisabled || isSecured}
+        disabled={currentNumber?.isBaseCurrency || isDisabled || isSecured || isRecordSaved}
         title={value}
         onBlur={(event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
           const elem = event.target as HTMLInputElement;
